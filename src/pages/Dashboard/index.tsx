@@ -33,14 +33,21 @@ const Dashboard: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [balance, setBalance] = useState<Balance>({} as Balance);
 
+  function formatDate(timestamp: Date): string {
+    const date: Date = new Date(timestamp);
+
+    return date.toLocaleDateString('pt-BR');
+  }
+
   useEffect(() => {
     async function loadTransactions(): Promise<void> {
-      const response = await api.get('/transactions/');
+      const response = await api.get('/transactions');
 
       const transactionsFormatted = response.data.transactions.map(
         (transaction: Transaction) => ({
           ...transaction,
           formattedValue: formatValue(transaction.value),
+          formattedDate: formatDate(transaction.created_at),
         }),
       );
 
@@ -56,12 +63,6 @@ const Dashboard: React.FC = () => {
 
     loadTransactions();
   }, []);
-
-  function formatDate(timestamp: Date): string {
-    const date: Date = new Date(timestamp);
-
-    return date.toLocaleDateString('pt-BR');
-  }
 
   return (
     <>
@@ -96,7 +97,7 @@ const Dashboard: React.FC = () => {
             <thead>
               <tr>
                 <th>Título</th>
-                <th>Preço</th>
+                <th>Valor</th>
                 <th>Categoria</th>
                 <th>Data</th>
               </tr>
@@ -106,17 +107,12 @@ const Dashboard: React.FC = () => {
               {transactions.map(transaction => (
                 <tr key={transaction.id}>
                   <td className="title">{transaction.title}</td>
-                  <td
-                    className={
-                      transaction.type === 'income' ? 'income' : 'outcome'
-                    }
-                  >
-                    {transaction.type === 'income'
-                      ? transaction.value
-                      : `-${transaction.value}`}
+                  <td className={transaction.type}>
+                    {transaction.type === 'outcome' && ' - '}
+                    {transaction.formattedValue}
                   </td>
-                  <td>{transaction.type}</td>
-                  <td>{formatDate(transaction.created_at)}</td>
+                  <td>{transaction.category.title}</td>
+                  <td>{transaction.formattedDate}</td>
                 </tr>
               ))}
             </tbody>
